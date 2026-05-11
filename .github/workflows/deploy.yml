@@ -67,7 +67,7 @@ jobs:
 
           android {
               namespace "com.example.shiftflow"
-              compileSdkVersion 34
+              compileSdkVersion 35
               ndkVersion flutter.ndkVersion
 
               compileOptions {
@@ -86,7 +86,7 @@ jobs:
               defaultConfig {
                   applicationId "com.example.shiftflow"
                   minSdkVersion 21
-                  targetSdkVersion 34
+                  targetSdkVersion 35
                   versionCode flutterVersionCode.toInteger()
                   versionName flutterVersionName
               }
