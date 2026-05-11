@@ -33,6 +33,7 @@ jobs:
 
       - name: Create platform files
         run: |
+          rm -rf android ios web linux macos windows
           flutter create . --platforms=android
           # 修复包结构：确保 MainActivity.kt 在正确的包路径下
           mkdir -p android/app/src/main/kotlin/com/example/shiftflow
