@@ -1,0 +1,229 @@
+name: Build & Deploy Flutter APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # ===== 1. 检出代码 =====
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ===== 2. 缓存 Flutter 依赖 =====
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            build/
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      # ===== 3. 设置 Flutter 环境 =====
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Create platform files
+        run: flutter create . --platforms=android
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # ===== 4. 注入签名配置 =====
+      - name: Inject signing config
+        run: |
+          cat > android/app/build.gradle << 'GROOVY'
+          plugins {
+              id "com.android.application"
+              id "kotlin-android"
+              id "dev.flutter.flutter-gradle-plugin"
+          }
+
+          def localProperties = new Properties()
+          def localPropertiesFile = rootProject.file('local.properties')
+          if (localPropertiesFile.exists()) {
+              localPropertiesFile.withReader('UTF-8') { reader ->
+                  localProperties.load(reader)
+              }
+          }
+
+          def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+          if (flutterVersionCode == null) {
+              flutterVersionCode = '1'
+          }
+
+          def flutterVersionName = localProperties.getProperty('flutter.versionName')
+          if (flutterVersionName == null) {
+              flutterVersionName = '1.0'
+          }
+
+          android {
+              namespace "com.example.shiftflow"
+              compileSdkVersion 34
+              ndkVersion flutter.ndkVersion
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+
+              sourceSets {
+                  main.java.srcDirs += 'src/main/kotlin'
+              }
+
+              defaultConfig {
+                  applicationId "com.example.shiftflow"
+                  minSdkVersion 21
+                  targetSdkVersion 34
+                  versionCode flutterVersionCode.toInteger()
+                  versionName flutterVersionName
+              }
+
+              signingConfigs {
+                  release {
+                      storeFile file(System.getenv("KEYSTORE_PATH") ?: "release-key.jks")
+                      storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
+                      keyAlias System.getenv("KEY_ALIAS") ?: ""
+                      keyPassword System.getenv("KEY_PASSWORD") ?: ""
+                  }
+              }
+
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                      minifyEnabled true
+                      shrinkResources true
+                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                  }
+              }
+          }
+
+          flutter {
+              source '../..'
+          }
+          GROOVY
+
+      # ===== 5. 设置 JDK =====
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # ===== 6. 解码签名密钥库 =====
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore.jks
+
+      # ===== 7. 构建签名 APK =====
+      - name: Build signed APK
+        run: |
+          flutter build apk --release \
+            --build-name=1.0.${{ github.run_number }} \
+            --build-number=${{ github.run_number }}
+        env:
+          KEYSTORE_PATH: android/app/keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      # ===== 8. 重命名并准备部署 =====
+      - name: Prepare APK for deploy
+        run: |
+          mkdir -p deploy
+          cp build/app/outputs/flutter-apk/app-release.apk deploy/shiftflow-v1.0.${{ github.run_number }}.apk
+          echo "Build completed: shiftflow-v1.0.${{ github.run_number }}.apk"
+
+      # ===== 9. 部署 APK 到云服务器 =====
+      - name: Deploy APK to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "deploy/*"
+          target: "/var/www/apk"
+          strip_components: 1
+
+      # ===== 10. 更新服务器下载页面 =====
+      - name: Update download page
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            # 生成下载页面
+            APK_FILE=$(ls -t /var/www/apk/shiftflow-*.apk | head -1)
+            APK_NAME=$(basename "$APK_FILE")
+            APK_SIZE=$(du -h "$APK_FILE" | cut -f1)
+            BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+
+            cat > /var/www/apk/index.html << 'EOF'
+            <!DOCTYPE html>
+            <html lang="zh-CN">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>ShiftFlow - APK 下载</title>
+              <style>
+                *{margin:0;padding:0;box-sizing:border-box}
+                body{font-family:-apple-system,BlinkMacSystemFont,Helvetica Neue,sans-serif;background:#1565C0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+                .card{background:#fff;border-radius:20px;padding:40px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+                .icon{width:80px;height:80px;background:#1565C0;border-radius:20px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:36px;font-weight:bold}
+                h1{color:#333;font-size:24px;margin-bottom:8px}
+                .version{color:#666;font-size:14px;margin-bottom:24px}
+                .info{background:#f5f7fa;border-radius:12px;padding:16px;margin-bottom:24px;text-align:left}
+                .info-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px}
+                .info-row:last-child{margin-bottom:0}
+                .info-label{color:#999}
+                .info-value{color:#333;font-weight:500}
+                .download-btn{display:block;width:100%;padding:16px;background:#1565C0;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;text-decoration:none;transition:transform .2s,box-shadow .2s}
+                .download-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(21,101,192,.3)}
+                .footer{margin-top:20px;font-size:12px;color:#999}
+                @media(max-width:480px){.card{padding:30px 20px}}
+              </style>
+            </head>
+            <body>
+              <div class="card">
+                <div class="icon">SF</div>
+                <h1>ShiftFlow</h1>
+                <p class="version">智能排班助手</p>
+                <div class="info">
+                  <div class="info-row"><span class="info-label">版本</span><span class="info-value">BUILD_VERSION</span></div>
+                  <div class="info-row"><span class="info-label">大小</span><span class="info-value">BUILD_SIZE</span></div>
+                  <div class="info-row"><span class="info-label">构建时间</span><span class="info-value">BUILD_DATE</span></div>
+                </div>
+                <a href="BUILD_APK" class="download-btn">下载 APK</a>
+                <p class="footer">下载后请在 Android 设置中允许安装未知来源应用</p>
+              </div>
+            </body>
+            </html>
+            EOF
+
+            sed -i "s|BUILD_VERSION|${APK_NAME%.apk}|g" /var/www/apk/index.html
+            sed -i "s|BUILD_SIZE|$APK_SIZE|g" /var/www/apk/index.html
+            sed -i "s|BUILD_DATE|$BUILD_DATE|g" /var/www/apk/index.html
+            sed -i "s|BUILD_APK|$APK_NAME|g" /var/www/apk/index.html
+
+            echo "Deployed: $APK_NAME ($APK_SIZE)"
+
+      # ===== 11. 上传构建产物 =====
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: shiftflow-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
