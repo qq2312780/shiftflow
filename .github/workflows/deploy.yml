@@ -32,7 +32,49 @@ jobs:
           channel: 'stable'
 
       - name: Create platform files
-        run: flutter create . --platforms=android
+        run: |
+          flutter create . --platforms=android
+          # 修复包结构：确保 MainActivity.kt 在正确的包路径下
+          mkdir -p android/app/src/main/kotlin/com/example/shiftflow
+          cat > android/app/src/main/kotlin/com/example/shiftflow/MainActivity.kt << 'EOF'
+          package com.example.shiftflow
+
+          import io.flutter.embedding.android.FlutterActivity
+
+          class MainActivity: FlutterActivity() {
+          }
+          EOF
+          # 确保 AndroidManifest.xml 存在且 package 正确
+          cat > android/app/src/main/AndroidManifest.xml << 'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="com.example.shiftflow">
+              <application
+                  android:label="shiftflow"
+                  android:name="${applicationName}"
+                  android:icon="@mipmap/ic_launcher">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:launchMode="singleTop"
+                      android:theme="@style/LaunchTheme"
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+                      android:hardwareAccelerated="true"
+                      android:windowSoftInputMode="adjustResize">
+                      <meta-data
+                        android:name="io.flutter.embedding.android.NormalTheme"
+                        android:resource="@style/NormalTheme"
+                        />
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+                  <meta-data
+                      android:name="flutterEmbedding"
+                      android:value="2" />
+              </application>
+          </manifest>
+          EOF
 
       - name: Install dependencies
         run: flutter pub get
