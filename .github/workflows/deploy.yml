@@ -168,6 +168,7 @@ jobs:
       - name: Decode Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore.jks
+          ls -la android/app/keystore.jks
 
       # ===== 7. 构建签名 APK =====
       - name: Build signed APK
@@ -176,7 +177,7 @@ jobs:
             --build-name=1.0.${{ github.run_number }} \
             --build-number=${{ github.run_number }}
         env:
-          KEYSTORE_PATH: android/app/keystore.jks
+          KEYSTORE_PATH: keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
