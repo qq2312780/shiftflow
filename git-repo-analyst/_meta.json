@@ -1,0 +1,65 @@
+{
+  "name": "git-repo-analyst",
+  "version": "1.0.0",
+  "description": "Analyzes a local git repository and produces a structured markdown report on commit activity, file churn, contributors, and code health. Read-only, no credentials.",
+  "category": "developer-tools",
+  "tags": [
+    "git",
+    "analytics",
+    "code-analysis",
+    "reporting",
+    "engineering"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "git-repo-analyst contributors"
+  },
+  "homepage": "https://github.com/example/git-repo-analyst",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/git-repo-analyst.git"
+  },
+  "requirements": {
+    "bins": ["git", "awk", "sort", "uniq", "wc", "find"],
+    "env": []
+  },
+  "triggers": [
+    "analyze this repo",
+    "audit this codebase",
+    "summarize recent activity",
+    "top contributors",
+    "file churn",
+    "engineering report",
+    "code health check",
+    "commit activity",
+    "weekly report"
+  ],
+  "input": {
+    "type": "object",
+    "properties": {
+      "repo_path": {
+        "type": "string",
+        "description": "Absolute path to the local git repository to analyze."
+      },
+      "days": {
+        "type": "integer",
+        "description": "Number of days to include in the analysis window.",
+        "default": 30,
+        "minimum": 1
+      }
+    },
+    "required": ["repo_path"]
+  },
+  "output": {
+    "type": "markdown",
+    "description": "A structured markdown report following references/report-template.md."
+  },
+  "files": [
+    "SKILL.md",
+    "_meta.json",
+    "LICENSE.txt",
+    "references/analysis-types.md",
+    "references/report-template.md",
+    "scripts/analyze.sh"
+  ]
+}
