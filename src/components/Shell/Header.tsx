@@ -25,10 +25,10 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
-  { label: "Chat", to: "/", Icon: MessagesSquareIcon },
-  { label: "Skills", to: "/skills", Icon: WrenchIcon },
-  { label: "Memory", to: "/memory", Icon: MemoryStickIcon },
-  { label: "Live", to: "/live", Icon: ZapIcon },
+  { label: "对话", to: "/", Icon: MessagesSquareIcon },
+  { label: "技能", to: "/skills", Icon: WrenchIcon },
+  { label: "记忆", to: "/memory", Icon: MemoryStickIcon },
+  { label: "实时", to: "/live", Icon: ZapIcon },
 ];
 
 export function Header() {
@@ -42,15 +42,13 @@ export function Header() {
     <header className="sticky top-0 z-30 border-b border-white/5 bg-ink-900/70 backdrop-blur-md">
       <div className="flex items-center justify-between px-6 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-6 h-6 rounded-full bg-gradient-to-br from-claw-300 to-claw-500 shadow-glow" />
-            <span className="font-display text-2xl tracking-tight wordmark">
-              OpenClaw
-            </span>
-          </div>
+          <span className="inline-block w-6 h-6 rounded-full bg-gradient-to-br from-claw-300 to-claw-500 shadow-glow" />
+          <span className="font-display text-2xl tracking-tight wordmark">
+            OpenClaw
+          </span>
           <span className="ml-2 text-xs text-bone-500/70">
-              v{version}
-            </span>
+            本地网关 · v{version}
+          </span>
         </div>
 
         <nav className="hidden md:flex items-center gap-1">
@@ -75,7 +73,7 @@ export function Header() {
 
         <div className="flex items-center gap-2 text-xs text-bone-500/70">
           <StatusDot status="connected" />
-          <span className="hidden sm:inline">local gateway</span>
+          <span className="hidden sm:inline">已连接</span>
         </div>
       </div>
     </header>

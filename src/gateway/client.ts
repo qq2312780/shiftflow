@@ -28,31 +28,36 @@ function toWords(text: string): string[] {
 }
 
 function cannedReply(userText: string): string {
-  const lower = userText.toLowerCase();
-  if (lower.includes("hello") || lower.includes("hi") || lower.includes("hey")) {
-    return "Hey — welcome in. I can chat, run skills, and show you a live event stream. Want me to walk through the Skills tab, or just start by asking me anything?";
+  const text = userText.toLowerCase();
+  if (
+    text.includes("你好") ||
+    text.includes("hi") ||
+    text.includes("hey") ||
+    text.includes("hello")
+  ) {
+    return "你好 — 欢迎来到 OpenClaw。我可以和你对话、执行技能，并且实时展示事件流。想先看一遍「技能」页，还是直接向我提问？";
   }
-  if (lower.includes("skill")) {
-    return "Think of skills as reusable procedures. Your installed skills live in the **Skills** tab — click any card to see its full SKILL.md and try it. Recommendation: start with `git-repo-analyst`, which reads a local repo and writes a short report.";
+  if (text.includes("技能") || text.includes("skill")) {
+    return "可以把技能理解为可复用的流程。已安装的技能都在「**技能**」页 — 点击任意卡片可查看完整的 SKILL.md 并上手。推荐先试试 `git-repo-analyst`：它会读取本地仓库，写出一份简短报告。";
   }
-  if (lower.includes("memory")) {
-    return "Memory is everything I persist across sessions: preferences, facts about your projects, topics you've explored. Open the **Memory** tab to see the timeline — it's fully readable and fully local.";
+  if (text.includes("记忆") || text.includes("memory")) {
+    return "记忆是跨会话持久保存的信息：偏好、项目事实、你探索过的话题。打开「**记忆**」页可看到完整的时间线 — 完全可读，也完全本地化。";
   }
-  if (lower.includes("live") || lower.includes("event")) {
-    return "The Live stream (right side of the chat) shows what I'm doing as I do it: thinking tokens, tool invocations, results, and errors. It's the debugging view — useful when a skill does something unexpected.";
+  if (text.includes("实时") || text.includes("事件") || text.includes("live") || text.includes("event")) {
+    return "「实时事件流」位于对话右侧，会在我做事的同时展示：思考过程、工具调用、结果、错误。它相当于调试视图 — 在某个技能出现意外行为时特别有用。";
   }
-  if (lower.includes("repo") || lower.includes("git") || lower.includes("codebase")) {
-    return "I can walk through a local git repo with the `git-repo-analyst` skill. Give me an absolute path and I'll produce a short markdown report covering commits, contributors, churn, branches, and the working-tree state. Want to pick a path, or should I start with `./`?";
+  if (text.includes("仓库") || text.includes("git") || text.includes("代码库")) {
+    return "我可以通过 `git-repo-analyst` 技能遍历本地 git 仓库。请给我一个绝对路径，我会生成一份简短的 Markdown 报告，涵盖提交、贡献者、文件变更量、分支以及工作区状态。你想指定一个路径，还是先从 `./` 开始？";
   }
-  if (lower.includes("thanks") || lower.includes("thank you")) {
-    return "Anytime. Let me know when you want a fresh report, a new skill scaffolded, or just a second opinion.";
+  if (text.includes("谢谢") || text.includes("thanks") || text.includes("感谢")) {
+    return "随时开口。当你需要一份新报告、搭建一个新技能，或者只想听听第二意见时，告诉我就行。";
   }
   return (
-    "That's an interesting question. Here's how I'd approach it:\n\n" +
-    "1. **Clarify the goal** — what counts as a good outcome?\n" +
-    "2. **Pick the smallest tool** that reaches it (local shell, a skill, nothing).\n" +
-    "3. **Run it, report it** — live events stream to the right; final answer shows up here.\n\n" +
-    "If you want, paste or describe a small concrete task and I'll run it end-to-end."
+    "这是一个有意思的问题。我的建议思路如下：\n\n" +
+    "1. **明确目标** — 对「好结果」的定义是什么？\n" +
+    "2. **选择最小可用工具**（本地 shell、某个技能，或者什么都不需要）。\n" +
+    "3. **运行并报告** — 右侧会实时推送事件；最终答案会出现在这里。\n\n" +
+    "如果你愿意，可以粘贴或描述一个具体的小任务，我会从头到尾把它跑一遍。"
   );
 }
 
@@ -92,21 +97,21 @@ export const gateway = {
     const reply = cannedReply(text);
     const words = toWords(reply);
 
-    yield { type: "thinking", at: base, text: "Deciding how to reply…" };
+    yield { type: "thinking", at: base, text: "正在决定如何回答…" };
     await delay(180);
 
     yield {
       type: "tool.call",
       at: base + 200,
-      tool: "intent-classifier",
-      payload: { intent: "reply-concise", context_length: text.length },
+      tool: "意图分类器",
+      payload: { intent: "简洁回答", context_length: text.length },
     };
     await delay(160);
 
     yield {
       type: "tool.result",
       at: base + 360,
-      tool: "intent-classifier",
+      tool: "意图分类器",
       ok: true,
       payload: { confidence: 0.87, words: words.length },
     };
@@ -117,6 +122,6 @@ export const gateway = {
       await delay(18);
     }
 
-    yield { type: "thinking", at: base + 800, text: "Done." };
+    yield { type: "thinking", at: base + 800, text: "回答完成。" };
   },
 };

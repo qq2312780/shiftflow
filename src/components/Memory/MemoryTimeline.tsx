@@ -1,85 +1,46 @@
 import { useMemo, useState } from "react";
 import { SearchIcon, TagIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useMemoryStore } from "../../store/memory";
-import { formatDateTime, formatRelative } from "../../utils/format";
+import { formatDateTime } from "../../utils/format";
 
-function TopicCloud({
-  topics,
-  active,
-  onSelect,
-}: {
-  topics: { name: string; count: number }[];
-  active: string | null;
-  onSelect: (name: string | null) => void;
-}) {
-  return (
-    <div className="panel p-4">
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-bone-500/70 mb-3">
-        <TagIcon size={12} /> topics
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => onSelect(null)}
-          className={`px-2.5 py-1 rounded-full text-xs border transition-all ${
-            active === null
-              ? "bg-claw-500/15 border-claw-500/30 text-claw-200"
-              : "bg-white/5 border-white/10 text-bone-400 hover:bg-white/10"
-          }`}
-        >
-          all
-        </button>
-        {topics.map((t) => {
-          const sizeStep = Math.min(2, Math.floor(t.count));
-          const sizeClass =
-            sizeStep === 0
-              ? "text-xs"
-              : sizeStep === 1
-                ? "text-sm"
-                : "text-sm font-medium";
-          return (
-            <button
-              key={t.name}
-              onClick={() => onSelect(t.name)}
-              className={`px-3 py-1 rounded-full border transition-all ${
-                active === t.name
-                  ? "bg-teal/15 border-teal/40 text-teal"
-                  : "bg-white/5 border-white/10 text-bone-400 hover:bg-white/10"
-              } ${sizeClass}`}
-            >
-              {t.name}
-              <span className="ml-1.5 text-bone-500/60 text-[10px] align-top">
-                {t.count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+function zhRelative(ts: number): string {
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "刚刚";
+  if (min < 60) return `${min} 分钟前`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `${hours} 小时前`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} 天前`;
+  return new Date(ts).toLocaleDateString("zh-CN");
 }
 
-function groupByDate(entries: { id: string; title: string; preview: string; body: string; tags: string[]; topic: string; createdAt: number }[]) {
-  const groups = new Map<string, { title: string; entries: typeof entries }>();
+type MemoryEntry = ReturnType<typeof useMemoryStore.getState>["entries"][number];
+
+function groupByDate(entries: MemoryEntry[]) {
+  const groups: { title: string; entries: MemoryEntry[] }[] = [
+    { title: "今天", entries: [] },
+    { title: "昨天", entries: [] },
+    { title: "最近一周", entries: [] },
+    { title: "最近一月", entries: [] },
+    { title: "更早", entries: [] },
+  ];
+
   const now = new Date();
+  const today = new Date(now.toDateString()).getTime();
+  const yesterday = today - 86400000;
+  const week = today - 7 * 86400000;
+  const month = today - 30 * 86400000;
 
   for (const e of entries) {
-    const d = new Date(e.createdAt);
-    const diffDays = Math.floor(
-      (new Date(now.toDateString()).getTime() - new Date(d.toDateString()).getTime()) /
-        86400000
-    );
-    let key: string;
-    if (diffDays === 0) key = "Today";
-    else if (diffDays === 1) key = "Yesterday";
-    else if (diffDays < 7) key = "This week";
-    else if (diffDays < 30) key = "This month";
-    else key = "Earlier";
-    if (!groups.has(key)) {
-      groups.set(key, { title: key, entries: [] });
-    }
-    groups.get(key)!.entries.push(e);
+    if (e.createdAt >= today) groups[0].entries.push(e);
+    else if (e.createdAt >= yesterday) groups[1].entries.push(e);
+    else if (e.createdAt >= week) groups[2].entries.push(e);
+    else if (e.createdAt >= month) groups[3].entries.push(e);
+    else groups[4].entries.push(e);
   }
-  return groups;
+
+  return groups.filter((g) => g.entries.length > 0);
 }
 
 export function MemoryTimeline() {
@@ -99,6 +60,7 @@ export function MemoryTimeline() {
         return (
           e.title.toLowerCase().includes(q) ||
           e.body.toLowerCase().includes(q) ||
+          e.preview.toLowerCase().includes(q) ||
           e.tags.some((t) => t.toLowerCase().includes(q))
         );
       })
@@ -115,15 +77,15 @@ export function MemoryTimeline() {
       .sort((a, b) => b.count - a.count);
   }, [entries]);
 
-  const groups = Array.from(groupByDate(filtered).values());
+  const groups = groupByDate(filtered);
 
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-end justify-between mb-4">
         <div>
-          <h2 className="font-display text-3xl text-bone-100">Memory</h2>
+          <h2 className="font-display text-3xl text-bone-100">记忆</h2>
           <p className="text-bone-500/70 text-sm mt-1">
-            what OpenClaw has remembered so far — {entries.length} entries, {topics.length} topics.
+            {entries.length} 条条目 · {topics.length} 个话题
           </p>
         </div>
         <div className="relative">
@@ -134,21 +96,45 @@ export function MemoryTimeline() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="search memory…"
+            placeholder="搜索记忆…"
             className="bg-ink-800 border border-white/5 rounded-full pl-9 pr-4 py-2 text-sm focus-ring w-64"
           />
         </div>
       </div>
 
-      <div className="mb-6">
-        <TopicCloud
-          topics={topics}
-          active={topicFilter}
-          onSelect={(t) => {
-            setTopic(t);
-            setOpenId(null);
-          }}
-        />
+      <div className="panel p-4 mb-6">
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-bone-500/70 mb-3">
+          <TagIcon size={12} />
+          <span>话题</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setTopic(null)}
+            className={`px-2.5 py-1 rounded-full text-xs border transition-all ${
+              topicFilter === null
+                ? "bg-claw-500/15 border-claw-500/30 text-claw-200"
+                : "bg-white/5 border-white/10 text-bone-400 hover:bg-white/10"
+            }`}
+          >
+            全部
+          </button>
+          {topics.map((t) => (
+            <button
+              key={t.name}
+              onClick={() => setTopic(t.name === topicFilter ? null : t.name)}
+              className={`px-3 py-1 rounded-full border text-xs transition-all ${
+                topicFilter === t.name
+                  ? "bg-teal/15 border-teal/40 text-teal"
+                  : "bg-white/5 border-white/10 text-bone-400 hover:bg-white/10"
+              }`}
+            >
+              {t.name}
+              <span className="ml-1.5 text-bone-500/60 text-[10px] align-top">
+                {t.count}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-8">
@@ -189,10 +175,10 @@ export function MemoryTimeline() {
                                 {e.title}
                               </h4>
                               <span className="text-[11px] text-bone-500/60 whitespace-nowrap">
-                                {formatRelative(e.createdAt)}
+                                {zhRelative(e.createdAt)}
                               </span>
                             </div>
-                            <p className="text-[13px] text-bone-400/90 leading-relaxed mt-1 line-clamp-2">
+                            <p className="text-[13px] text-bone-400/90 leading-relaxed mt-1 line-clamp-3">
                               {e.preview}
                             </p>
                             <div className="flex flex-wrap gap-1.5 mt-2.5">
@@ -214,7 +200,7 @@ export function MemoryTimeline() {
                         {isOpen && (
                           <div className="border-t border-white/5 p-4 text-[13.5px] text-bone-300/90 leading-relaxed">
                             <div className="text-[10.5px] uppercase tracking-widest text-bone-500/60 mb-1.5">
-                              full entry · {formatDateTime(e.createdAt)}
+                              完整内容 · {formatDateTime(e.createdAt)}
                             </div>
                             {e.body}
                           </div>
@@ -231,9 +217,9 @@ export function MemoryTimeline() {
         {filtered.length === 0 && (
           <div className="text-center text-bone-500/70 py-16">
             <p className="font-display text-xl text-bone-200">
-              No memory entries match.
+              没有匹配的记忆条目
             </p>
-            <p className="text-sm mt-1">Try a different topic or clear the search.</p>
+            <p className="text-sm mt-1">换个关键词或切换话题再试试。</p>
           </div>
         )}
       </div>

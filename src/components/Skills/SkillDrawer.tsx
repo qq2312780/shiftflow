@@ -49,14 +49,14 @@ export function SkillDrawer() {
                     {skill.name}
                   </h3>
                   <p className="text-[11px] text-bone-500/60 mt-1 uppercase tracking-widest">
-                    installed · {new Date(skill.installedAt).toLocaleDateString()}
+                    安装于 {new Date(skill.installedAt).toLocaleDateString("zh-CN")}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => close()}
                 className="p-1.5 rounded-full text-bone-500/70 hover:text-bone-100 hover:bg-white/5 border border-white/10"
-                aria-label="Close"
+                aria-label="关闭"
               >
                 <XIcon size={16} />
               </button>
@@ -82,12 +82,12 @@ export function SkillDrawer() {
             </div>
 
             <div className="p-4 border-t border-white/5 text-[11px] text-bone-500/70 flex justify-between">
-              <span>local installation, read-only</span>
+              <span>本地安装 · 只读</span>
               <button
                 onClick={() => close()}
                 className="text-bone-400 hover:text-bone-200 underline underline-offset-4"
               >
-                close
+                关闭
               </button>
             </div>
           </div>

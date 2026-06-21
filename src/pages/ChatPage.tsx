@@ -18,7 +18,7 @@ export function ChatPage() {
     useChatStore.setState({
       activeId: id,
       conversations: [
-        { id, title: "New conversation", updatedAt: Date.now() },
+        { id: id, title: "新建对话", updatedAt: Date.now() },
         ...conversations,
       ],
     });

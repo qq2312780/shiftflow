@@ -61,7 +61,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   activeId: initial?.activeId ?? "welcome",
   conversations:
     initial?.conversations ?? [
-      { id: "welcome", title: "Welcome", updatedAt: Date.now() },
+      { id: "welcome", title: "欢迎", updatedAt: Date.now() },
     ],
   messagesByConversation: initial?.messagesByConversation ?? {},
   isStreaming: false,
@@ -79,7 +79,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const id = "c_" + Math.random().toString(36).slice(2, 9);
     const conv: ConversationSummary = {
       id,
-      title: "New conversation",
+      title: "新建对话",
       updatedAt: Date.now(),
     };
     set((s) => ({

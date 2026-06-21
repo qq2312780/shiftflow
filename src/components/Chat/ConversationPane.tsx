@@ -9,6 +9,16 @@ import type { ChatMessage, GatewayEvent } from "../../gateway/types";
 import { formatTime } from "../../utils/format";
 import { roleAccent, roleIcon, roleLabel } from "../../utils/roles";
 
+function roleLabelZh(role: string): string {
+  switch (role) {
+    case "agent": return "助手";
+    case "tool": return "工具";
+    case "system": return "系统";
+    case "user": return "你";
+    default: return role;
+  }
+}
+
 function MessageBubble({ message }: { message: ChatMessage }) {
   const [copied, setCopied] = useState(false);
   const Icon = roleIcon(message.role);
@@ -27,11 +37,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`group relative max-w-[85%] md:max-w-[78%] ${
-          isUser
-            ? "text-bone-100"
-            : "text-bone-200"
-        }`}
+        className={`group relative max-w-[85%] md:max-w-[78%]`}
       >
         <div
           className={`flex items-center gap-2 text-[11px] mb-1 ${
@@ -44,7 +50,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             )}`}
           >
             <Icon size={11} />
-            {roleLabel(message.role)}
+            {roleLabelZh(message.role)}
           </span>
           <span className="text-bone-500/60">{formatTime(message.createdAt)}</span>
         </div>
@@ -73,7 +79,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           <button
             onClick={copy}
             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-bone-500/70 hover:text-bone-200 text-xs flex items-center gap-1"
-            title="Copy"
+            title="复制"
           >
             {copied ? <CheckIcon size={12} /> : <CopyIcon size={12} />}
           </button>
@@ -149,7 +155,7 @@ export function ConversationPane({
           type: "error",
           at: Date.now(),
           message:
-            err instanceof Error ? err.message : "unknown error",
+            err instanceof Error ? err.message : "未知错误",
         };
         pushLive(e);
       } finally {
@@ -164,10 +170,8 @@ export function ConversationPane({
     [appendMessage, conversationId, isStreaming, pushLive, setStreaming, updateLast]
   );
 
-  // Expose send as a window-side-effect that Composer uses via a callback event.
   useEffect(() => {
-    (window as unknown as { __clawSend?: (t: string) => void }).__clawSend =
-      send;
+    (window as unknown as { __clawSend?: (t: string) => void }).__clawSend = send;
     return () => {
       const w = window as unknown as { __clawSend?: (t: string) => void };
       if (w.__clawSend === send) delete w.__clawSend;
@@ -182,9 +186,9 @@ export function ConversationPane({
       {messages.length === 0 && (
         <div className="text-center text-bone-500/60 text-sm pt-16">
           <p className="font-display text-3xl text-bone-200 mb-2">
-            Welcome to the conversation.
+            欢迎使用 OpenClaw
           </p>
-          <p>Type a question below — or try the command palette with <code>/</code>.</p>
+          <p>在下方输入你的问题，或试试输入 <code>/</code> 打开快捷指令</p>
         </div>
       )}
 

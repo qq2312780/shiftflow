@@ -3,10 +3,17 @@ import { SendIcon, CornerDownLeftIcon } from "lucide-react";
 import { useChatStore } from "../../store/chat";
 
 const SUGGESTIONS = [
-  { label: "/skills", desc: "browse installed skills" },
-  { label: "/memory", desc: "open the memory timeline" },
-  { label: "/live", desc: "show the live event stream" },
-  { label: "/new", desc: "start a new conversation" },
+  { label: "介绍一下你自己", desc: "简介" },
+  { label: "分析当前项目的代码结构", desc: "代码" },
+  { label: "给我看看最近的内存记忆", desc: "记忆" },
+  { label: "有哪些技能？挑三个解释一下", desc: "技能" },
+];
+
+const SLASH = [
+  { label: "/skills", desc: "浏览已安装技能" },
+  { label: "/memory", desc: "打开记忆时间线" },
+  { label: "/live", desc: "打开实时事件流" },
+  { label: "/new", desc: "新建一段对话" },
 ];
 
 export function Composer({ conversationId }: { conversationId: string }) {
@@ -39,11 +46,10 @@ export function Composer({ conversationId }: { conversationId: string }) {
       setValue("");
       return;
     }
-    // The /skills /memory /live labels are just friendly prompts.
     const promptMap: Record<string, string> = {
-      "/skills": "Recommend a few skills from the ones currently installed.",
-      "/memory": "Show me a short summary of what's in my memory timeline.",
-      "/live": "Summarize the live event stream and explain what it's showing.",
+      "/skills": "把已安装的技能列表和每一项的一句话简介发给我。",
+      "/memory": "总结一下我最近的记忆条目，按话题分组。",
+      "/live": "实时事件流里有哪些最近的事件？简单列出。",
     };
     setValue(promptMap[label] ?? label.slice(1));
     setShowPalette(false);
@@ -67,20 +73,41 @@ export function Composer({ conversationId }: { conversationId: string }) {
       <div className="max-w-4xl mx-auto relative">
         {showPalette && (
           <div className="absolute bottom-full left-0 right-0 mb-3 pointer-events-none">
-            <div className="panel pointer-events-auto p-2 flex flex-wrap gap-2">
-              <span className="text-[11px] uppercase tracking-widest text-bone-500/70 px-1 py-1">
-                quick prompts
-              </span>
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s.label}
-                  onClick={() => applySlash(s.label)}
-                  className="px-2.5 py-1 rounded-full text-xs bg-white/5 hover:bg-claw-500/15 text-bone-200 border border-white/10 hover:border-claw-500/30"
-                >
-                  <span className="font-mono text-claw-300 mr-1.5">{s.label}</span>
-                  <span className="text-bone-500/80">{s.desc}</span>
-                </button>
-              ))}
+            <div className="panel pointer-events-auto p-2">
+              <div className="text-[11px] uppercase tracking-widest text-bone-500/70 px-1 pb-1">
+                快捷指令
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {SLASH.map((s) => (
+                  <button
+                    key={s.label}
+                    onClick={() => applySlash(s.label)}
+                    className="px-2.5 py-1 rounded-full text-xs bg-white/5 hover:bg-claw-500/15 text-bone-200 border border-white/10 hover:border-claw-500/30"
+                  >
+                    <span className="font-mono text-claw-300 mr-1.5">{s.label}</span>
+                    <span className="text-bone-500/80">{s.desc}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="text-[11px] uppercase tracking-widest text-bone-500/70 px-1 pt-3 pb-1">
+                或尝试
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {SUGGESTIONS.map((s) => (
+                  <button
+                    key={s.label}
+                    onClick={() => {
+                      setValue(s.label);
+                      setShowPalette(false);
+                      textareaRef.current?.focus();
+                    }}
+                    className="px-2.5 py-1 rounded-full text-xs bg-white/5 hover:bg-teal/15 text-bone-200 border border-white/10 hover:border-teal/30"
+                  >
+                    {s.label}
+                    <span className="text-bone-500/60 ml-1.5">· {s.desc}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -98,7 +125,7 @@ export function Composer({ conversationId }: { conversationId: string }) {
               setShowPalette(e.target.value === "");
             }}
             onKeyDown={onKeyDown}
-            placeholder={`Message OpenClaw${isStreaming ? " (thinking…)" : ""}  —  type / for quick prompts`}
+            placeholder={`向 OpenClaw 提问${isStreaming ? "（思考中…）" : ""} — 输入 / 打开快捷指令`}
             className="flex-1 bg-transparent outline-none resize-none text-[14.5px] text-bone-100 placeholder:text-bone-500/60 py-1.5 px-1 leading-relaxed"
             rows={1}
             disabled={isStreaming}
@@ -107,9 +134,9 @@ export function Composer({ conversationId }: { conversationId: string }) {
           <div className="flex items-center gap-1 shrink-0">
             <span className="hidden sm:flex items-center gap-1 text-[10.5px] text-bone-500/50 pr-2">
               <CornerDownLeftIcon size={12} />
-              Enter
+              Enter 发送
               <span className="text-bone-500/40 mx-0.5">·</span>
-              Shift+Enter for newline
+              Shift+Enter 换行
             </span>
 
             <button
@@ -122,12 +149,12 @@ export function Composer({ conversationId }: { conversationId: string }) {
               }`}
             >
               <SendIcon size={14} />
-              {isStreaming ? "…" : "Send"}
+              {isStreaming ? "思考中" : "发送"}
             </button>
           </div>
         </div>
       </div>
-      <span className="sr-only">conversation id: {conversationId}</span>
+      <span className="sr-only">对话 id: {conversationId}</span>
     </div>
   );
 }

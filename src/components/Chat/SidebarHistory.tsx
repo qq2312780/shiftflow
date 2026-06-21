@@ -5,15 +5,23 @@ import { useChatStore } from "../../store/chat";
 import { gateway } from "../../gateway/client";
 import { formatRelative } from "../../utils/format";
 
+function zhRelative(ts: number): string {
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "刚刚";
+  if (min < 60) return `${min} 分钟前`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `${hours} 小时前`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} 天前`;
+  return new Date(ts).toLocaleDateString("zh-CN");
+}
+
 export function SidebarHistory() {
   const conversations = useChatStore((s) => s.conversations);
   const activeId = useChatStore((s) => s.activeId);
   const newConversation = useChatStore((s) => s.newConversation);
   const setActive = useChatStore((s) => s.setActive);
-  const setConversations = useChatStore((s) => s.conversations);
-
-  // Keep lint happy by reading setConversations if it were ever used.
-  void setConversations;
 
   useEffect(() => {
     if (useChatStore.getState().conversations.length === 0) {
@@ -30,14 +38,14 @@ export function SidebarHistory() {
       <div className="p-3">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs uppercase tracking-widest text-bone-500/70">
-            conversations
+            对话列表
           </span>
           <button
             onClick={() => newConversation()}
             className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-white/5 hover:bg-claw-500/20 transition-colors border border-white/10 text-bone-300 focus-ring"
-            title="New conversation"
+            title="新建对话"
           >
-            <PlusIcon size={14} /> new
+            <PlusIcon size={14} /> 新建
           </button>
         </div>
       </div>
@@ -50,7 +58,7 @@ export function SidebarHistory() {
           />
           <input
             type="text"
-            placeholder="search…"
+            placeholder="搜索对话…"
             className="w-full bg-ink-800 border border-white/5 rounded-full pl-8 pr-3 py-1.5 text-sm focus-ring"
           />
         </div>
@@ -71,10 +79,10 @@ export function SidebarHistory() {
             }
           >
             <span className="line-clamp-1 font-medium">
-              {c.title || "Untitled"}
+              {c.title || "未命名对话"}
             </span>
             <span className="text-[11px] text-bone-500/50 mt-0.5">
-              {formatRelative(c.updatedAt)}
+              {zhRelative(c.updatedAt)}
             </span>
           </NavLink>
         ))}

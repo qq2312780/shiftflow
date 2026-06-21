@@ -23,7 +23,7 @@ function SkillCard({ skill }: { skill: SkillCardType }) {
               {skill.name}
             </h3>
             <p className="text-[11px] text-bone-500/70 mt-0.5">
-              installed · {new Date(skill.installedAt).toLocaleDateString()}
+              安装于 {new Date(skill.installedAt).toLocaleDateString("zh-CN")}
             </p>
           </div>
         </div>
@@ -74,11 +74,9 @@ export function SkillsGrid() {
     <div className="max-w-6xl mx-auto">
       <div className="flex items-end justify-between mb-6">
         <div>
-          <h2 className="font-display text-3xl text-bone-100">
-            Skills
-          </h2>
+          <h2 className="font-display text-3xl text-bone-100">技能</h2>
           <p className="text-bone-500/70 text-sm mt-1">
-            procedural extensions that teach OpenClaw how to act. {skills.length} installed.
+            可复用的行为模块 — 已安装 {skills.length} 个
           </p>
         </div>
         <div className="relative">
@@ -89,8 +87,8 @@ export function SkillsGrid() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="search skills, tags…"
-            className="bg-ink-800 border border-white/5 rounded-full pl-9 pr-4 py-2 text-sm focus-ring w-56"
+            placeholder="搜索技能 / 标签…"
+            className="bg-ink-800 border border-white/5 rounded-full pl-9 pr-4 py-2 text-sm focus-ring w-64"
           />
         </div>
       </div>
@@ -104,9 +102,9 @@ export function SkillsGrid() {
       {filtered.length === 0 && (
         <div className="text-center text-bone-500/70 mt-16">
           <p className="font-display text-xl text-bone-200">
-            No skills match "{query}".
+            没有匹配到 “{query}”
           </p>
-          <p className="text-sm mt-1">Try a different tag or name.</p>
+          <p className="text-sm mt-1">尝试其它关键词或清空搜索框。</p>
         </div>
       )}
 
