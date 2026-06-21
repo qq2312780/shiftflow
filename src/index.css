@@ -1,0 +1,213 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(255, 122, 26, 0.12), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgba(26, 182, 168, 0.10), transparent 60%),
+    linear-gradient(180deg, #07080A 0%, #0B0D10 100%);
+  color: #EDE6D6;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 3px 3px;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: overlay;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Scrollbar styling — subtle and dark */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Panel helper — translucent card with hairline border */
+.panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+}
+
+.panel-hover:hover {
+  border-color: rgba(255, 122, 26, 0.35);
+  box-shadow: 0 14px 40px -18px rgba(255, 122, 26, 0.35);
+}
+
+.hairline-divider {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  height: 1px;
+}
+
+/* Markdown rendering overrides */
+.markdown p {
+  margin: 0.25rem 0;
+  line-height: 1.65;
+}
+.markdown pre {
+  background: #0D1014;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  margin: 0.6rem 0;
+}
+.markdown code {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 12.5px;
+  color: #FFD6B0;
+}
+.markdown pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: 12.5px;
+}
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  font-family: "Fraunces", ui-serif, serif;
+  color: #FFF3E6;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.01em;
+}
+.markdown h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+.markdown h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+.markdown h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #FFB985;
+}
+.markdown ul,
+.markdown ol {
+  padding-left: 1.25rem;
+  margin: 0.35rem 0;
+}
+.markdown li {
+  margin: 0.15rem 0;
+}
+.markdown a {
+  color: #FFC88A;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.markdown blockquote {
+  border-left: 2px solid rgba(255, 122, 26, 0.5);
+  color: #C9BFAE;
+  padding-left: 0.85rem;
+  margin: 0.5rem 0;
+  font-style: italic;
+}
+.markdown table {
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 0.6rem 0;
+  width: 100%;
+}
+.markdown th,
+.markdown td {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 6px 10px;
+  text-align: left;
+}
+.markdown th {
+  background: rgba(255, 255, 255, 0.04);
+  color: #FFD6B0;
+}
+
+/* Streaming token glow */
+.stream-token {
+  display: inline-block;
+  animation: fade-in-up 240ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+/* Staggered entrance for lists / grids of cards */
+.stagger > * {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: fade-in-up 320ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 20ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 100ms; }
+.stagger > *:nth-child(4) { animation-delay: 140ms; }
+.stagger > *:nth-child(5) { animation-delay: 180ms; }
+.stagger > *:nth-child(6) { animation-delay: 220ms; }
+.stagger > *:nth-child(7) { animation-delay: 260ms; }
+.stagger > *:nth-child(8) { animation-delay: 300ms; }
+.stagger > *:nth-child(n+9) { animation-delay: 340ms; }
+
+/* Wordmark gradient */
+.wordmark {
+  background: linear-gradient(135deg, #FFF3E6 0%, #FFC88A 50%, #FF7A1A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Subtle focus ring */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 122, 26, 0.5);
+}
+
+/* Backdrop for drawers */
+.drawer-backdrop {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(7, 8, 10, 0.55);
+}
